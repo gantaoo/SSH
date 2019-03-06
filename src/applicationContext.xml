@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" 
+    xmlns:aop="http://www.springframework.org/schema/aop"
+    xmlns:context="http://www.springframework.org/schema/context" 
+    xmlns:tx="http://www.springframework.org/schema/tx"
+    xsi:schemaLocation="http://www.springframework.org/schema/beans 
+    http://www.springframework.org/schema/beans/spring-beans.xsd
+        http://www.springframework.org/schema/aop 
+        http://www.springframework.org/schema/aop/spring-aop.xsd
+        http://www.springframework.org/schema/context 
+        http://www.springframework.org/schema/context/spring-context.xsd
+        http://www.springframework.org/schema/tx 
+        http://www.springframework.org/schema/tx/spring-tx.xsd">
+
+    <!-- 注册数据库链接文件 -->
+   	<context:property-placeholder location="classpath:jdbc.properties" />
+	 
+	<!-- 开启注解 -->
+	<context:annotation-config />
+	<!-- 开启注解扫描 -->
+	<context:component-scan base-package="com.gt" />
+ 
+    <!-- 注册C3P0 数据源 -->
+    <bean id="myDataSource" class="com.mchange.v2.c3p0.ComboPooledDataSource">
+        <property name="user" value="${db.username}"></property>
+        <property name="password" value="${db.password}"></property>
+        <property name="driverClass" value="${db.driverClass}"></property>
+        <property name="jdbcUrl" value="${db.jdbcUrl}"></property>
+        <property name="initialPoolSize" value="${db.initialPoolSize}"></property>
+        <property name="maxPoolSize" value="${db.maxPoolSize}"></property>
+    </bean>
+
+    <!-- 注册 LocalSessionFactoryBean,这种配置可以省略 Hibernate 的主配置文件 -->
+    <bean id="sessionFactory" class="org.springframework.orm.hibernate5.LocalSessionFactoryBean">
+        <property name="dataSource" ref="myDataSource"></property>
+        <!-- 配置hibernate 信息 --> 
+        <property name="hibernateProperties">
+            <props>
+                <prop key="hibernate.dialect">org.hibernate.dialect.MySQL5InnoDBDialect</prop>
+                <prop key="hibernate.show_sql">true</prop>
+                <prop key="hibernate.format_sql">true</prop>
+                <prop key="hibernate.hbm2ddl.auto">update</prop>
+                <!-- 
+	                hibernate使用的 方言 
+	                hibernate.dialect=org.hibernate.dialect.MySQL5InnoDBDialect 
+					根据实体的映射文件生成表结构 
+	                hibernate.hbm2ddl.auto=update                   
+	            	 是否打印出sql语句 
+	                hibernate.show_sql=false    
+                -->  
+            </props>
+        </property>
+        <!--自动扫描实体（注解） -->    
+        <property name="packagesToScan"  value="com.gt.entity" />
+        <!-- 
+	       	自动扫描注解方式配置的hibernate类文件
+			<property name="packagesToScan">
+				<list>
+					<value>com.liem.*.entity</value>
+				</list>
+			</property>
+		-->
+    </bean>
+    
+	<!-- 注册事务管理器 -->
+	<bean id="transactionManager" class="org.springframework.orm.hibernate5.HibernateTransactionManager">
+	    <property name="sessionFactory" ref="sessionFactory"/>
+	</bean>
+
+	<!-- 开启注解管理事务 -->
+	<tx:annotation-driven transaction-manager="transactionManager"/>
+ 
+</beans>
